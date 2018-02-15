@@ -17,7 +17,7 @@ class StreamSink
       return 1 << ((sizeof(int) << 3) - 2);
     }
 
-    size_t write (const char* buffer, size_t length)
+    size_t write (const uint8_t* buffer, size_t length)
     {
       (void)buffer;
       return length;

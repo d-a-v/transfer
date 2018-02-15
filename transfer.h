@@ -50,8 +50,8 @@ size_t _transferTo (SI& in, SO& out)
 	if (!size)
 		return 0;
 	size = in.readBytes(_transfer_buf, size);
-	size_t wsize = out.write(_transfer_buf, size);
-	assert(wsize == size);
+	size_t wsize = out.write((const uint8_t*)_transfer_buf, size);
+	//assert(wsize == size);
 	return wsize;
 }
 
