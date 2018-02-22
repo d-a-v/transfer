@@ -12,6 +12,11 @@
 #define USTREAMBUFRND			(1<<USTREAMBUFRNDBITS)
 #define USTREAMBUFSZ(x)			(((x) + USTREAMBUFRND - 1) & ~(USTREAMBUFRND - 1))
 
+#ifndef TCP_MSS
+#warning TCP_MSS undefined
+#define TCP_MSS 1460
+#endif
+
 size_t _transfer_maxsize __attribute__((weak)) = TCP_MSS; // default
 size_t _transfer_bufsize __attribute__((weak)) = 0;
 char*  _transfer_buf     __attribute__((weak)) = 0;
