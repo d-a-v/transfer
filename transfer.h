@@ -6,31 +6,25 @@
 #include <assert.h>
 
 #define transferTo(i,o)			_transferTo<__typeof__(i),__typeof__(o)>(i,o)
-#define transferToKw(i,o,kw)		_transferTo<__typeof__(i),__typeof__(o)>(i,o,kw)
+#define transferToMax(i,o,ms)		_transferTo<__typeof__(i),__typeof__(o)>(i,o,ms)
 #define setTransferMaxBufSize(s)	(_transfer_maxsize = (s))
 
 #define USTREAMBUFRNDBITS		4 // round bufsize to multiple of 2^4
 #define USTREAMBUFRND			(1<<USTREAMBUFRNDBITS)
 #define USTREAMBUFSZ(x)			(((x) + USTREAMBUFRND - 1) & ~(USTREAMBUFRND - 1))
 
-#ifndef TCP_MSS
-#warning TCP_MSS undefined
-#define TCP_MSS 1460
-#endif
-
-size_t _transferTo_maxsize __attribute__((weak)) = TCP_MSS; // default
 size_t _transferTo_bufsize __attribute__((weak)) = 0;
 char*  _transferTo_buf     __attribute__((weak)) = 0;
 
-size_t _transferTo_size (size_t availr, size_t availw) __attribute__((weak, warn_unused_result));
-size_t _transferTo_size (size_t availr, size_t availw)
+size_t _transferTo_size (size_t availr, size_t availw, ssize_t maxsize = -1) __attribute__((weak, warn_unused_result));
+size_t _transferTo_size (size_t availr, size_t availw, ssize_t maxsize)
 {
 	if (availr > availw)
 		availr = availw;
+	if (maxsize >= 0 && availr > (size_t)maxsize)
+		availr = maxsize;
 	if (!availr)
 		return 0;
-	if (_transferTo_maxsize && availr > _transferTo_maxsize)
-		availr = _transferTo_maxsize;
 	if (availr > _transferTo_bufsize)
 	{
 		size_t newsize = USTREAMBUFSZ(availr);
@@ -57,11 +51,9 @@ void _transferTo_alloc (size_t size)
 }
 
 template <class SI, class SO>
-size_t _transferTo (SI& in, SO& out, size_t keepw = 0)
+size_t _transferTo (SI& in, SO& out, ssize_t maxsize = -1)
 {
-	size_t availw = out.availableForWrite();
-	availw = (availw < keepw)? 0: availw - keepw;
-	size_t size = _transferTo_size(in.available(), availw);
+	size_t size = _transferTo_size(in.available(), out.availableForWrite(), maxsize);
 	if (!size)
 		return 0;
 	size = in.readBytes(_transferTo_buf, size);
